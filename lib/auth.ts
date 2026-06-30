@@ -18,11 +18,18 @@ export async function createSession(user: SessionUser) {
     .setIssuedAt()
     .setExpirationTime('12h')
     .sign(secret());
-  cookies().set(cookieName, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/' });
+  const cookieStore = await cookies();
+  cookieStore.set(cookieName, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+  });
 }
 
 export async function getSession(): Promise<SessionUser | null> {
-  const token = cookies().get(cookieName)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(cookieName)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
@@ -32,6 +39,7 @@ export async function getSession(): Promise<SessionUser | null> {
   }
 }
 
-export function clearSession() {
-  cookies().delete(cookieName);
+export async function clearSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(cookieName);
 }
